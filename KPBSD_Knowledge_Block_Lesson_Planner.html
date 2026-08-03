@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KPBSD Multiage CKLA Lesson Planner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+  :root{
+    --navy:#012B59; --black:#000000; --white:#FFFFFF;
+    --lgray:#F4F6F8; --mgray:#D0D7DE; --sky:#5B92C2; --teal:#9DD4D3; --rose:#C45E9E;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Lato','Helvetica Neue',Arial,sans-serif;color:var(--black);background:var(--white);margin:0;padding:28px 20px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  .masthead{border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:22px;}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sky);font-weight:700;margin-bottom:6px;}
+  h1{font-size:24px;color:var(--navy);margin:0 0 6px;font-weight:900;}
+  .sub{font-size:14px;color:#333;max-width:700px;line-height:1.45;}
+  .controls{display:flex;gap:20px;flex-wrap:wrap;background:var(--lgray);border:1px solid var(--mgray);border-radius:8px;padding:18px 20px;margin-bottom:22px;}
+  .field{flex:1;min-width:220px;}
+  .field.full{flex-basis:100%;}
+  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);margin-bottom:8px;}
+  input[type=text]{width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--mgray);border-radius:6px;background:var(--white);color:var(--black);}
+  input[type=text]:focus{outline:2px solid var(--sky);outline-offset:1px;}
+  select{width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--mgray);border-radius:6px;background:var(--white);color:var(--black);appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%23012B59' stroke-width='2' fill='none'/></svg>");
+    background-repeat:no-repeat;background-position:right 11px center;}
+  select:focus{outline:2px solid var(--sky);outline-offset:1px;}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{position:relative;}
+  .chip input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
+  .chip .chip-label{display:block;min-width:40px;text-align:center;padding:8px 12px;border:1px solid var(--mgray);border-radius:6px;background:var(--white);font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;user-select:none;}
+  .chip input:checked + .chip-label{background:var(--navy);color:var(--white);border-color:var(--navy);}
+  .specific-group{margin-top:12px;}
+  .specific-group-label{font-size:11px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .specific-row{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:13px;}
+  .specific-row input{margin-top:3px;}
+  .specific-row label{font-weight:400;text-transform:none;letter-spacing:0;color:#111;margin:0;cursor:pointer;}
+  .specific-row .code{font-weight:700;color:var(--navy);}
+  #empty{text-align:center;padding:50px 20px;color:#667;font-size:14px;border:1px dashed var(--mgray);border-radius:8px;}
+  #plan{display:none;}
+  .plan-head{background:var(--navy);color:var(--white);border-radius:8px 8px 0 0;padding:16px 20px;}
+  .plan-head .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.14);padding:3px 9px;border-radius:3px;margin-right:8px;margin-bottom:4px;}
+  .plan-head h2{font-size:18px;margin:10px 0 2px;font-weight:700;}
+  .plan-head p{margin:0;font-size:13px;color:#cfe0ee;}
+  .card{border:1px solid var(--mgray);border-top:none;border-radius:0 0 8px 8px;padding:4px 20px 10px;margin-bottom:22px;}
+  .section{padding:16px 0;border-bottom:1px solid var(--mgray);}
+  .section:last-child{border-bottom:none;}
+  .section h3{font-size:13px;color:var(--navy);text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .section h3::before{content:"";width:8px;height:8px;background:var(--sky);border-radius:2px;display:inline-block;}
+  .section p,.section li,.section td,.section th{font-size:13.5px;line-height:1.55;color:#111;}
+  .timestamp-box{background:var(--lgray);border-radius:6px;padding:12px 14px;font-size:13.5px;line-height:1.55;}
+  table.std{width:100%;border-collapse:collapse;margin-top:4px;margin-bottom:14px;font-size:12.5px;}
+  table.std th{background:var(--navy);color:var(--white);text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  table.std th.anchor-col{background:var(--rose);}
+  table.std td{padding:7px 8px;border-bottom:1px solid var(--mgray);vertical-align:top;}
+  table.std tr:nth-child(even) td{background:var(--lgray);}
+  .std-title{font-weight:700;color:var(--navy);}
+  .standard-block{margin-bottom:20px;}
+  .standard-block-label{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+  .grade-plan-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .grade-plan-card{flex:1;min-width:230px;background:var(--white);border:1px solid var(--mgray);border-radius:6px;padding:10px 12px;}
+  .grade-plan-card .g{font-size:11px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .grade-plan-card label.mini{font-size:10.5px;color:#556;text-transform:uppercase;letter-spacing:.03em;font-weight:700;margin:6px 0 3px;display:block;}
+  textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 9px;border:1px solid var(--mgray);border-radius:5px;background:var(--white);color:var(--black);resize:vertical;min-height:52px;line-height:1.4;}
+  textarea:focus{outline:2px solid var(--sky);outline-offset:1px;}
+  .print-btn{background:var(--navy);color:var(--white);border:none;border-radius:6px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;}
+  .print-btn:hover{background:var(--sky);}
+  @media print{.controls,.print-btn{display:none;} body{padding:0;} textarea{border:none;background:transparent;padding:2px 0;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Attuned Education Partners &middot; KPBSD Multiage ELA Playbook</div>
+    <h1>Multiage Knowledge Block Lesson Planner</h1>
+    <div class="sub">Plan the whole-group Knowledge/Integrated lesson for your cluster. Topic and Text stay the same for everyone; Target and Task are what you adjust per grade level, anchored to the grade whose materials you're actually planning from.</div>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <label>Grades in Your Cluster</label>
+      <div class="chip-row" id="gradeChecks"></div>
+    </div>
+    <div class="field">
+      <label for="anchorSelect">Planning From (Grade-Level Materials)</label>
+      <select id="anchorSelect"><option value="">Check grades first&hellip;</option></select>
+    </div>
+    <div class="field full" style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <label for="topicInput">Topic (shared, static)</label>
+        <input type="text" id="topicInput" placeholder="e.g., Chinese New Year & Diwali">
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <label for="textInput">Text / Read-Aloud (shared, static)</label>
+        <input type="text" id="textInput" placeholder="e.g., Unit 2, Lesson 14 read-aloud">
+      </div>
+    </div>
+    <div class="field full">
+      <label>Standard Strand(s)</label>
+      <div class="chip-row" id="strandChecks"></div>
+      <div id="specificStandardsArea"></div>
+    </div>
+  </div>
+
+  <div id="empty">Check the grades in your cluster, choose which grade's materials you're planning from, and select at least one specific standard to start planning.</div>
+
+  <div id="plan">
+    <div class="plan-head">
+      <div id="tagRow"></div>
+      <h2 id="planTitle"></h2>
+      <p id="planSubtitle"></p>
+    </div>
+    <div class="card">
+
+      <div class="section">
+        <h3>Suggested Timestamps</h3>
+        <div id="timestampArea"></div>
+      </div>
+
+      <div class="section">
+        <h3>Target &amp; Task by Grade</h3>
+        <p style="margin-bottom:10px;">Topic and Text stay fixed above. The anchor grade (the one whose materials you're planning from) keeps Target/Task at full rigor &mdash; adjust the rest up or down from there using the progression.</p>
+        <div id="strandPanels"></div>
+        <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ALL_GRADES = ["K","G1","G2","G3","G4","G5"];
+const GRADE_LABELS = {K:"K",G1:"1",G2:"2",G3:"3",G4:"4",G5:"5"};
+const GRADE_FULL = {K:"Kindergarten",G1:"Grade 1",G2:"Grade 2",G3:"Grade 3",G4:"Grade 4",G5:"Grade 5"};
+
+// Alaska ELA Standards Progression, K-5 (KPBSD Playbook Appendix A) -- Knowledge/Integrated-relevant strands
+const STANDARDS = {
+  RL: {name:"Reading: Literature (RL)", rows:[
+    {num:1,title:"Key Ideas: Questioning",K:"With support, ask/answer questions about key details.",G1:"Ask/answer questions about key details.",G2:"Ask/answer who/what/where/when/why/how questions.",G3:"Ask/answer questions citing explicit text details.",G4:"Refer to details/examples; explain explicit meaning and inferences.",G5:"Quote accurately; use explicit text to support inferences."},
+    {num:2,title:"Key Ideas: Theme/Retell",K:"With support, retell familiar stories using key details.",G1:"Retell stories; identify message/lesson.",G2:"Retell incl. fables/folktales; determine author's purpose/lesson.",G3:"Determine purpose/message; summarize in sequence.",G4:"Determine theme/message using text evidence; summarize incl. conflict resolution.",G5:"Determine theme via character response/speaker reflection; summarize."},
+    {num:3,title:"Key Ideas: Characters/Events",K:"With support, identify characters, setting, major events.",G1:"Describe characters, settings, major events using details.",G2:"Describe how characters respond to events/problems.",G3:"Describe characters (traits/motivations) and their role in events.",G4:"Describe in depth a character/setting/event using text details.",G5:"Compare/contrast characters, settings, or events using details."},
+    {num:4,title:"Craft: Word Choice",K:"Ask/answer questions about unknown words.",G1:"Identify words/phrases that suggest feelings or appeal to senses.",G2:"Identify rhythm/sensory language and its effect on the reader.",G3:"Determine literal vs. figurative meaning (e.g., tall-tale exaggeration).",G4:"Determine meaning incl. figurative language/literary devices.",G5:"Determine meaning incl. figurative language, analogies, hyperbole."},
+    {num:5,title:"Craft: Structure",K:"Identify common text types (books, stories, poems, songs).",G1:"Explain differences between story books and information books.",G2:"Describe a story's overall structure (beginning/middle/end).",G3:"Refer to chapter/scene/stanza; describe how parts build on each other.",G4:"Explain differences among poem/drama/prose structural elements.",G5:"Explain how chapters/scenes/stanzas fit into overall structure."},
+    {num:6,title:"Craft: Point of View",K:"Name the author/illustrator and their role.",G1:"Identify who is telling the story at various points.",G2:"Read dialogue in different voices per character; note viewpoint differences.",G3:"Distinguish own point of view from narrator's/characters'.",G4:"Compare/contrast first- vs. third-person narration effects.",G5:"Describe how narrator/speaker point of view shapes the text."},
+    {num:7,title:"Integration: Illustrations/Media",K:"With support, connect illustrations to the story.",G1:"Use illustrations/details to describe characters/events/setting.",G2:"Use illustrations and words together to understand plot.",G3:"Explain how illustrations contribute to the story's meaning/mood.",G4:"Connect story text to a visual/oral presentation of it.",G5:"Analyze how visual/multimedia elements contribute to meaning/tone."},
+    {num:9,title:"Integration: Compare Texts",K:"With support, compare/contrast characters in familiar stories.",G1:"With support, compare/contrast characters across stories.",G2:"Compare/contrast versions of the same story across authors/cultures.",G3:"Compare/contrast themes/settings/plots by the same author.",G4:"Compare/contrast similar themes/plots/patterns across literature.",G5:"Compare/contrast stories in the same genre and their approach to theme."},
+    {num:10,title:"Range/Complexity",K:"Engage in shared reading with purpose/understanding.",G1:"With support, read prose/poetry at grade-1 complexity.",G2:"Read/comprehend literature within the grade-2 complexity band.",G3:"Read/comprehend literature within the grade-3 complexity band.",G4:"Read/comprehend literature within the grade-4 complexity band.",G5:"Read/comprehend literature within the grade-5 complexity band."}
+  ]},
+  RI: {name:"Reading: Informational Text (RI)", rows:[
+    {num:1,title:"Key Ideas: Questioning",K:"With support, ask/answer questions using background knowledge and key details.",G1:"With support, ask/answer questions using prior knowledge and details.",G2:"Ask/answer who/what/where/when/why/how questions.",G3:"Ask/answer questions citing explicit text as the basis.",G4:"Locate explicit info to explain text and support inferences.",G5:"Locate explicit info to explain text and support inferences."},
+    {num:2,title:"Key Ideas: Main Topic/Idea",K:"With support, identify the main topic and retell key details.",G1:"Identify main topic/author's purpose; retell key details.",G2:"Identify the main topic of a multi-paragraph text and its parts.",G3:"Determine main idea and supporting details; summarize in sequence.",G4:"Determine main idea and explain supporting details; summarize.",G5:"Determine main idea and subtopics; summarize accordingly."},
+    {num:3,title:"Key Ideas: Connections",K:"With support, describe connections between individuals/events/ideas.",G1:"Describe connections between individuals/events/ideas.",G2:"Describe connections among historical events/scientific ideas/steps.",G3:"Describe relationships using time/sequence/cause-effect language.",G4:"Explain cause-effect relationships among events/ideas/concepts.",G5:"Explain relationships/interactions among individuals/events/ideas."},
+    {num:4,title:"Craft: Word Meaning",K:"With support, ask/answer questions about unknown words.",G1:"Ask/answer questions to clarify word/phrase meaning.",G2:"Determine meaning of words/phrases relevant to grade-2 topics.",G3:"Determine meaning of academic/domain words for grade-3 topics.",G4:"Determine meaning of academic/domain words for grade-4 topics.",G5:"Determine meaning of academic/domain words for grade-5 topics."},
+    {num:5,title:"Craft: Text Features",K:"Identify front cover, back cover, title page.",G1:"Use text features (titles, labels, bold print, icons) to locate info.",G2:"Use text features (captions, headings, charts) to locate info efficiently.",G3:"Use search tools (table of contents, index, hyperlinks) to locate info.",G4:"Describe overall structure (sequence, comparison, cause-effect, problem-solution).",G5:"Compare/contrast structure across two or more texts."},
+    {num:6,title:"Craft: Purpose/Point of View",K:"Name the author/illustrator and their role.",G1:"Distinguish info from photos/graphics vs. words.",G2:"Identify the main purpose of a text.",G3:"Determine author's purpose; distinguish own view from author's.",G4:"Compare/contrast firsthand vs. secondhand accounts.",G5:"Analyze multiple accounts of the same event/topic for differing viewpoints."},
+    {num:7,title:"Integration: Visuals",K:"With support, connect illustrations to the text.",G1:"Use illustrations/details to describe key ideas.",G2:"Explain how specific images clarify the text.",G3:"Use illustrations/maps/photos to understand the text.",G4:"Interpret visual/oral/quantitative info (charts, diagrams, timelines).",G5:"Draw on multiple print/digital sources to answer a question efficiently."},
+    {num:8,title:"Integration: Argument/Evidence",K:"With support, identify opinions the author states.",G1:"Identify opinions the author states to support points.",G2:"Describe how reasons support the author's stated opinions.",G3:"Describe logical connections between sentences/paragraphs.",G4:"Explain how the author uses reasons/evidence to support points.",G5:"Explain which reasons/evidence support which specific points."},
+    {num:9,title:"Integration: Compare Texts",K:"With support, compare/contrast info in two texts on the same topic.",G1:"Compare/contrast info presented in two texts.",G2:"Compare/contrast most important points across two texts.",G3:"Compare/contrast most important points/details across two texts.",G4:"Integrate info from two texts to speak/write knowledgeably.",G5:"Integrate info from several texts to speak/write knowledgeably."},
+    {num:10,title:"Range/Complexity",K:"Engage in shared reading of informational texts.",G1:"With support, read informational texts at grade-1 complexity.",G2:"Read/comprehend informational texts within the grade-2 band.",G3:"Read/comprehend informational texts within the grade-3 band.",G4:"Read/comprehend informational texts within the grade-4 band.",G5:"Read/comprehend informational texts within the grade-5 band."}
+  ]},
+  W: {name:"Writing (W)", rows:[
+    {num:1,title:"Opinion Writing",K:"Draw/dictate/write to state an opinion.",G1:"Introduce topic, state opinion, give a reason, provide closure.",G2:"State opinion with reasons, linking words, concluding statement.",G3:"Organize fact/text-based reasons with linking words; concluding statement.",G4:"Group related ideas; support reasons with facts/details; linking words.",G5:"Logically grouped, well-supported reasons; varied linking language."},
+    {num:2,title:"Informative Writing",K:"Draw/dictate/write to name a topic and give information.",G1:"Name topic, supply facts, provide closure.",G2:"Introduce topic, use facts/definitions, concluding statement.",G3:"Group info, use facts/definitions/details, linking words, conclusion.",G4:"Add formatting/visuals; precise/domain vocabulary; stronger conclusion.",G5:"General observation/focus; more sophisticated linking across categories."},
+    {num:3,title:"Narrative Writing",K:"Draw/dictate/write to narrate an event with an ending.",G1:"Recount events in order using linking words; provide an ending.",G2:"Well-elaborated narrative with details and a concluding feeling/lesson.",G3:"Dialogue, description, event sequence; sense of closure.",G4:"More developed narrative technique and transitional variety; motivations.",G5:"Adds pacing, literary devices, foreshadowing to narrative technique."},
+    {num:7,title:"Research Projects",K:"Participate in shared research/writing projects.",G1:"Participate in shared research projects (e.g., how-to sequences).",G2:"Participate in shared research projects producing a report/presentation.",G3:"Conduct short research projects to build knowledge on a topic.",G4:"Conduct short research investigating different aspects of a topic.",G5:"Conduct short research using several sources."},
+    {num:8,title:"Gathering Information",K:"With guidance, recall/gather info from provided sources to answer a question.",G1:"Same, at grade-1 level.",G2:"Recall/gather info from provided sources (less guidance needed).",G3:"Recall/gather info; take brief notes; sort evidence into categories.",G4:"Take notes, categorize info, and list sources.",G5:"Summarize/paraphrase info in notes and finished work; list sources."}
+  ]},
+  SL: {name:"Speaking & Listening (SL)", rows:[
+    {num:1,title:"Collaborative Discussion",K:"Participate in conversations; follow discussion rules; continue exchanges.",G1:"Build on others' talk; ask clarifying questions.",G2:"Link comments to others' remarks; ask for clarification.",G3:"Come prepared; follow discussion protocols; link comments; explain understanding.",G4:"Come prepared; follow roles; pose/respond to clarifying questions.",G5:"Come prepared; follow roles; elaborate on others' remarks; draw conclusions."},
+    {num:2,title:"Understanding Media",K:"Confirm understanding of read-aloud/media; ask for clarification.",G1:"Ask/answer questions about key details in read-aloud/media.",G2:"Retell/describe key ideas from read-aloud/media.",G3:"Determine main ideas/details of read-aloud/media.",G4:"Paraphrase portions of read-aloud/media.",G5:"Summarize written text or media presented in diverse formats."},
+    {num:3,title:"Evaluating a Speaker",K:"Ask/answer questions to seek help or clarify.",G1:"Ask/answer questions to gather info or clarify.",G2:"Ask/answer questions to clarify, gather info, or deepen understanding.",G3:"Ask/answer questions with elaboration/explanation.",G4:"Identify a speaker's reasons/evidence for points made.",G5:"Summarize a speaker's points and how each is supported."},
+    {num:4,title:"Presenting Ideas",K:"Describe familiar people/places/things with support.",G1:"Describe people/places/things/events with relevant details.",G2:"Tell/retell an experience with relevant facts, audibly, in sentences.",G3:"Report/recount with facts and details, speaking clearly at a good pace.",G4:"Report in organized manner supporting main ideas/themes.",G5:"Report/present opinion, sequencing ideas logically."}
+  ]},
+  L: {name:"Language (L)", rows:[
+    {num:4,title:"Determine Word Meaning",K:"Use new-meaning and affix clues for unknown words.",G1:"Use sentence context, affixes, and root words as clues.",G2:"Use context, prefixes, root words, and compound-word logic.",G3:"Use context, affixes, and reference materials to determine meaning.",G4:"Same, with grade-4 texts and greater reference-material independence.",G5:"Same, with grade-5 texts and greater independence."},
+    {num:5,title:"Figurative Language/Nuance",K:"Sort objects into categories; note antonyms and real-life word connections.",G1:"Sort into categories; define by attribute; distinguish shades of meaning.",G2:"Real-life word connections; distinguish shades of meaning among related words.",G3:"Distinguish literal/nonliteral meaning; real-life connections; shades of meaning.",G4:"Explain similes/metaphors/idioms/adages; word relationships (synonym/antonym).",G5:"Interpret figurative language in context; word relationships; connotation/denotation."},
+    {num:6,title:"Academic & Domain Vocabulary",K:"Use words/phrases acquired through conversation and read-alouds.",G1:"Same, incl. conjunctions to signal simple relationships.",G2:"Same, incl. adjectives/adverbs to describe.",G3:"Acquire/use grade-appropriate academic and domain-specific vocabulary.",G4:"Same, at grade-4 level, incl. precise language for research/writing.",G5:"Same, at grade-5 level, with growing independence."}
+  ]}
+};
+
+// ---- Build grade chips ----
+const gradeChecks = document.getElementById('gradeChecks');
+ALL_GRADES.forEach(g=>{
+  const wrap=document.createElement('div'); wrap.className='chip';
+  const input=document.createElement('input'); input.type='checkbox'; input.value=g; input.id='chip-g-'+g;
+  const lbl=document.createElement('label'); lbl.className='chip-label'; lbl.htmlFor='chip-g-'+g; lbl.textContent=GRADE_LABELS[g];
+  wrap.appendChild(input); wrap.appendChild(lbl);
+  gradeChecks.appendChild(wrap);
+  input.addEventListener('change', onGradesChanged);
+});
+
+const anchorSelect = document.getElementById('anchorSelect');
+anchorSelect.addEventListener('change', render);
+
+// ---- Build strand chips (multi-select) ----
+const strandChecks = document.getElementById('strandChecks');
+Object.entries(STANDARDS).forEach(([key,s])=>{
+  const wrap=document.createElement('div'); wrap.className='chip';
+  const input=document.createElement('input'); input.type='checkbox'; input.value=key; input.id='chip-strand-'+key;
+  const lbl=document.createElement('label'); lbl.className='chip-label'; lbl.htmlFor='chip-strand-'+key; lbl.textContent=key; lbl.title=s.name;
+  wrap.appendChild(input); wrap.appendChild(lbl);
+  strandChecks.appendChild(wrap);
+  input.addEventListener('change', onStrandsChanged);
+});
+
+document.getElementById('topicInput').addEventListener('input', updateHeaderOnly);
+document.getElementById('textInput').addEventListener('input', updateHeaderOnly);
+
+function getSelectedGrades(){ return ALL_GRADES.filter(g => document.getElementById('chip-g-'+g).checked); }
+function getSelectedStrands(){ return Object.keys(STANDARDS).filter(s => document.getElementById('chip-strand-'+s).checked); }
+
+// Tracks which specific standard checkboxes (strand|rowIdx) are checked, across re-renders of the picker
+let checkedSpecific = {};
+
+function onStrandsChanged(){
+  const strands = getSelectedStrands();
+  const area = document.getElementById('specificStandardsArea');
+  area.innerHTML = '';
+  strands.forEach(strandKey=>{
+    const group = document.createElement('div');
+    group.className = 'specific-group';
+    const gl = document.createElement('div');
+    gl.className = 'specific-group-label';
+    gl.textContent = STANDARDS[strandKey].name + ' \u2014 pick specific standard(s)';
+    group.appendChild(gl);
+    STANDARDS[strandKey].rows.forEach((r,rowIdx)=>{
+      const key = strandKey+'|'+rowIdx;
+      const row = document.createElement('div');
+      row.className = 'specific-row';
+      const cb = document.createElement('input');
+      cb.type='checkbox'; cb.id='spec-'+strandKey+'-'+rowIdx;
+      cb.checked = !!checkedSpecific[key];
+      cb.addEventListener('change', ()=>{ checkedSpecific[key]=cb.checked; render(); });
+      const lbl = document.createElement('label');
+      lbl.htmlFor = cb.id;
+      lbl.innerHTML = '<span class="code">'+strandKey+'.'+r.num+'</span> '+r.title;
+      row.appendChild(cb); row.appendChild(lbl);
+      group.appendChild(row);
+    });
+    area.appendChild(group);
+  });
+  // clear checked-state for standards whose strand is no longer selected
+  Object.keys(checkedSpecific).forEach(key=>{
+    const strandKey = key.split('|')[0];
+    if(!strands.includes(strandKey)) delete checkedSpecific[key];
+  });
+  render();
+}
+
+function getSelectedSpecificStandards(){
+  // returns array of {strand, rowIdx, row} in strand-then-row order
+  const result = [];
+  Object.keys(STANDARDS).forEach(strandKey=>{
+    STANDARDS[strandKey].rows.forEach((r,rowIdx)=>{
+      const key = strandKey+'|'+rowIdx;
+      if(checkedSpecific[key]) result.push({strand:strandKey, rowIdx, row:r});
+    });
+  });
+  return result;
+}
+
+function onGradesChanged(){
+  const grades = getSelectedGrades();
+  const prevAnchor = anchorSelect.value;
+  anchorSelect.innerHTML = '';
+  if(grades.length===0){
+    const o=document.createElement('option'); o.value=''; o.textContent='Check grades first\u2026';
+    anchorSelect.appendChild(o);
+  } else {
+    grades.forEach(g=>{
+      const o=document.createElement('option'); o.value=g; o.textContent=GRADE_FULL[g];
+      anchorSelect.appendChild(o);
+    });
+    anchorSelect.value = grades.includes(prevAnchor) ? prevAnchor : grades[grades.length-1];
+  }
+  render();
+}
+
+// Preserve typed Target/Task text across re-renders (keyed by strand|rowIndex|grade|field)
+let savedText = {};
+
+function saveCurrentText(){
+  document.querySelectorAll('textarea[data-key]').forEach(ta=>{
+    savedText[ta.dataset.key] = ta.value;
+  });
+}
+
+function buildStandardsTable(strandKey, row, gradesInGroup, anchorGrade){
+  let thead='<tr><th>Standard</th>'+gradesInGroup.map(g=>'<th'+(g===anchorGrade?' class="anchor-col"':'')+'>'+GRADE_FULL[g]+(g===anchorGrade?' \u2605':'')+'</th>').join('')+'</tr>';
+  let tbody='<tr><td class="std-title">'+strandKey+'.'+row.num+': '+row.title+'</td>'+gradesInGroup.map(g=>'<td>'+row[g]+'</td>').join('')+'</tr>';
+  return '<table class="std">'+thead+tbody+'</table>';
+}
+
+function buildTargetTaskPlanning(strandKey, rowIdx, row, gradesInGroup){
+  let html = '<div class="grade-plan-row">';
+  gradesInGroup.forEach(g=>{
+    const targetKey = strandKey+'|'+rowIdx+'|'+g+'|target';
+    const taskKey = strandKey+'|'+rowIdx+'|'+g+'|task';
+    const targetVal = savedText[targetKey] || '';
+    const taskVal = savedText[taskKey] || '';
+    html += '<div class="grade-plan-card"><div class="g">'+GRADE_FULL[g]+'</div>'
+          + '<p style="font-size:11.5px;color:#556;margin:0 0 4px;">'+row[g]+'</p>'
+          + '<label class="mini">Target</label>'
+          + '<textarea data-key="'+targetKey+'" placeholder="I can...">'+targetVal+'</textarea>'
+          + '<label class="mini">Task / Question</label>'
+          + '<textarea data-key="'+taskKey+'" placeholder="Specific question or task for this grade">'+taskVal+'</textarea>'
+          + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function timestampHTML(gradesInGroup){
+  const scaffolded = gradesInGroup.length > 1;
+  if(!scaffolded){
+    return '<div class="timestamp-box"><strong>Single grade, full time:</strong> ~35&ndash;45 min total &mdash; roughly 10 min Background/Intro, 20&ndash;30 min Text/Read-Aloud, 5&ndash;10 min Discussion/Application. No scaffolding needed at one grade level.</div>';
+  }
+  return '<div class="timestamp-box"><strong>Scaffolded across '+gradesInGroup.length+' grades:</strong> ~25 min whole-group total &mdash; 3&ndash;5 min Background/Intro (shared throughline only), 15&ndash;17 min Text/Read-Aloud (limit mid-text discussion, prioritize end-of-text comprehension), 4&ndash;5 min Discussion/Task Prep (preview the task, then send students to independent or small-group time to complete their grade-specific Task at their own Target).</div>';
+}
+
+function updateHeaderOnly(){
+  const topic = document.getElementById('topicInput').value || '(topic not yet entered)';
+  const txt = document.getElementById('textInput').value || '(text not yet entered)';
+  const el = document.getElementById('planSubtitle');
+  if(el && document.getElementById('plan').style.display!=='none'){
+    el.textContent = 'Topic: '+topic+' \u00b7 Text: '+txt;
+  }
+}
+
+function render(){
+  saveCurrentText();
+  const selectedGrades = getSelectedGrades();
+  const selectedSpecific = getSelectedSpecificStandards();
+  const anchorGrade = anchorSelect.value;
+  const emptyEl=document.getElementById('empty'), planEl=document.getElementById('plan');
+
+  if(selectedGrades.length===0 || selectedSpecific.length===0 || !anchorGrade){ emptyEl.style.display='block'; planEl.style.display='none'; return; }
+
+  emptyEl.style.display='none'; planEl.style.display='block';
+
+  const bandLabel = selectedGrades.map(g=>GRADE_LABELS[g]).join('/');
+  const tagRow = document.getElementById('tagRow');
+  tagRow.innerHTML = '<span class="tag">Grades '+bandLabel+'</span><span class="tag">Anchor: '+GRADE_FULL[anchorGrade]+'</span>' + selectedSpecific.map(s=>'<span class="tag">'+s.strand+'.'+s.row.num+'</span>').join('');
+  document.getElementById('planTitle').textContent = 'Knowledge Block Plan';
+  updateHeaderOnly();
+
+  document.getElementById('timestampArea').innerHTML = timestampHTML(selectedGrades);
+
+  let html = '';
+  selectedSpecific.forEach(s=>{
+    html += '<div class="standard-block"><div class="standard-block-label">'+s.strand+'.'+s.row.num+': '+s.row.title+' <span style="color:var(--rose);font-weight:400;">(\u2605 = anchor grade)</span></div>';
+    html += buildStandardsTable(s.strand, s.row, selectedGrades, anchorGrade);
+    html += buildTargetTaskPlanning(s.strand, s.rowIdx, s.row, selectedGrades);
+    html += '</div>';
+  });
+  document.getElementById('strandPanels').innerHTML = html;
+
+  document.querySelectorAll('textarea[data-key]').forEach(ta=>{
+    ta.addEventListener('input', ()=>{ savedText[ta.dataset.key] = ta.value; });
+  });
+}
+
+onGradesChanged();
+render();
+</script>
+</body>
+</html>
