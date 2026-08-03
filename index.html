@@ -38,12 +38,13 @@
   .specific-row label{font-weight:400;text-transform:none;letter-spacing:0;color:#111;margin:0;cursor:pointer;}
   .specific-row .code{font-weight:700;color:var(--navy);}
   #empty{text-align:center;padding:50px 20px;color:#667;font-size:14px;border:1px dashed var(--mgray);border-radius:8px;}
-  #plan{display:none;}
+  .split-banner{background:var(--white);border:1px dashed var(--rose);border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13.5px;line-height:1.5;}
+  .group-card{margin-bottom:26px;}
   .plan-head{background:var(--navy);color:var(--white);border-radius:8px 8px 0 0;padding:16px 20px;}
   .plan-head .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.14);padding:3px 9px;border-radius:3px;margin-right:8px;margin-bottom:4px;}
   .plan-head h2{font-size:18px;margin:10px 0 2px;font-weight:700;}
   .plan-head p{margin:0;font-size:13px;color:#cfe0ee;}
-  .card{border:1px solid var(--mgray);border-top:none;border-radius:0 0 8px 8px;padding:4px 20px 10px;margin-bottom:22px;}
+  .card{border:1px solid var(--mgray);border-top:none;border-radius:0 0 8px 8px;padding:4px 20px 10px;}
   .section{padding:16px 0;border-bottom:1px solid var(--mgray);}
   .section:last-child{border-bottom:none;}
   .section h3{font-size:13px;color:var(--navy);text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;font-weight:700;display:flex;align-items:center;gap:8px;}
@@ -66,7 +67,8 @@
   textarea:focus{outline:2px solid var(--sky);outline-offset:1px;}
   .print-btn{background:var(--navy);color:var(--white);border:none;border-radius:6px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;}
   .print-btn:hover{background:var(--sky);}
-  @media print{.controls,.print-btn{display:none;} body{padding:0;} textarea{border:none;background:transparent;padding:2px 0;}}
+  #globalActions{display:none;margin-top:6px;}
+  @media print{.controls,.print-btn,#globalActions{display:none;} body{padding:0;} textarea{border:none;background:transparent;padding:2px 0;}}
 </style>
 </head>
 <body>
@@ -75,66 +77,29 @@
   <div class="masthead">
     <div class="eyebrow">Attuned Education Partners &middot; KPBSD Multiage ELA Playbook</div>
     <h1>Multiage Knowledge Block Lesson Planner</h1>
-    <div class="sub">Plan the whole-group Knowledge/Integrated lesson for your cluster. Topic and Text stay the same for everyone; Target and Task are what you adjust per grade level, anchored to the grade whose materials you're actually planning from.</div>
+    <div class="sub">Plan the whole-group Knowledge/Integrated lesson for your cluster. If you select more than 3 grades, this splits into a K-2 block and a 3-5 block &mdash; each with its own Unit, Lesson, and standards. Target and Task are what you adjust per grade level, anchored to the grade whose materials you're actually planning from.</div>
     <button id="clearBtn" class="print-btn" style="background:var(--rose);margin-top:12px;">Start a New Plan (Clear Everything)</button>
   </div>
 
   <div class="controls">
-    <div class="field">
+    <div class="field full">
       <label>Grades in Your Cluster</label>
       <div class="chip-row" id="gradeChecks"></div>
     </div>
-    <div class="field">
-      <label for="anchorSelect">Planning From (Grade-Level Materials)</label>
-      <select id="anchorSelect"><option value="">Check grades first&hellip;</option></select>
-    </div>
-    <div class="field full" style="display:flex;gap:16px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:220px;">
-        <label for="topicInput">CKLA Unit</label>
-        <input type="text" id="topicInput" placeholder="e.g., Unit 2: Fables and Stories">
-      </div>
-      <div style="flex:1;min-width:220px;">
-        <label for="textInput">Lesson</label>
-        <input type="text" id="textInput" placeholder="e.g., Lesson 14">
-      </div>
-    </div>
-    <div class="field full">
-      <label>Standard Strand(s)</label>
-      <div class="chip-row" id="strandChecks"></div>
-      <div id="specificStandardsArea"></div>
-    </div>
   </div>
 
-  <div id="empty">Check the grades in your cluster, choose which grade's materials you're planning from, and select at least one specific standard to start planning.</div>
+  <div id="empty">Check the grades in your cluster to start planning.</div>
 
-  <div id="plan">
-    <div class="plan-head">
-      <div id="tagRow"></div>
-      <h2 id="planTitle"></h2>
-      <p id="planSubtitle"></p>
+  <div id="groupsContainer"></div>
+
+  <div id="globalActions">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
+      <button class="print-btn" id="saveBtn" style="background:var(--sky);">Save My Plan (Download)</button>
+      <button class="print-btn" id="loadBtn" style="background:var(--teal);color:var(--navy);">Load a Plan</button>
+      <input type="file" id="loadFileInput" accept="application/json" style="display:none;">
     </div>
-    <div class="card">
-
-      <div class="section">
-        <h3>Suggested Timestamps</h3>
-        <div id="timestampArea"></div>
-        <p style="margin-top:8px;font-size:12px;"><a href="https://docs.google.com/document/d/1YixalDNwCtEw9MipBAhI1w3UnyzGOQc7-5-AUjbbZsU/edit?usp=drive_link" target="_blank" style="color:var(--navy);">Reference: KPBSD Multiage Classroom ELA Playbook (Part II: Structuring the Literacy Block)</a></p>
-      </div>
-
-      <div class="section">
-        <h3>Target &amp; Task by Grade</h3>
-        <p style="margin-bottom:10px;">Topic and Text stay fixed above. Adjust up or down by grade level using the standards progression to ensure grade level alignment for all.</p>
-        <div id="strandPanels"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;">
-          <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
-          <button class="print-btn" id="saveBtn" style="background:var(--sky);">Save My Plan (Download)</button>
-          <button class="print-btn" id="loadBtn" style="background:var(--teal);color:var(--navy);">Load a Plan</button>
-          <input type="file" id="loadFileInput" accept="application/json" style="display:none;">
-        </div>
-        <p style="font-size:11.5px;color:#556;margin-top:8px;">This browser autosaves your work as you type. Use <strong>Save My Plan</strong> to download a file you can reopen later or on another device, and <strong>Load a Plan</strong> to bring one back in.</p>
-      </div>
-
-    </div>
+    <p style="font-size:11.5px;color:#556;margin-top:8px;">This browser autosaves your work as you type. Use <strong>Save My Plan</strong> to download a file you can reopen later or on another device, and <strong>Load a Plan</strong> to bring one back in.</p>
   </div>
 
 </div>
@@ -199,35 +164,119 @@ ALL_GRADES.forEach(g=>{
   gradeChecks.appendChild(wrap);
   input.addEventListener('change', onGradesChanged);
 });
-
-const anchorSelect = document.getElementById('anchorSelect');
-anchorSelect.addEventListener('change', render);
-
-// ---- Build strand chips (multi-select) ----
-const strandChecks = document.getElementById('strandChecks');
-Object.entries(STANDARDS).forEach(([key,s])=>{
-  const wrap=document.createElement('div'); wrap.className='chip';
-  const input=document.createElement('input'); input.type='checkbox'; input.value=key; input.id='chip-strand-'+key;
-  const lbl=document.createElement('label'); lbl.className='chip-label'; lbl.htmlFor='chip-strand-'+key; lbl.textContent=key; lbl.title=s.name;
-  wrap.appendChild(input); wrap.appendChild(lbl);
-  strandChecks.appendChild(wrap);
-  input.addEventListener('change', onStrandsChanged);
-});
-
-document.getElementById('topicInput').addEventListener('input', updateHeaderOnly);
-document.getElementById('textInput').addEventListener('input', updateHeaderOnly);
-
 function getSelectedGrades(){ return ALL_GRADES.filter(g => document.getElementById('chip-g-'+g).checked); }
-function getSelectedStrands(){ return Object.keys(STANDARDS).filter(s => document.getElementById('chip-strand-'+s).checked); }
 
-// Tracks which specific standard checkboxes (strand|rowIdx) are checked, across re-renders of the picker
-let checkedSpecific = {};
+// ---- Grouping logic: >3 grades forces a split into K-2 / 3-5 Knowledge Blocks ----
+function getGroups(grades){
+  if(grades.length===0) return [];
+  if(grades.length<=3) return [{key:'single', label:'Knowledge Block', grades: grades.slice()}];
+  const k2 = grades.filter(g=>['K','G1','G2'].includes(g));
+  const g35 = grades.filter(g=>['G3','G4','G5'].includes(g));
+  const groups=[];
+  if(k2.length) groups.push({key:'K2', label:'K-2 Knowledge Block', grades:k2});
+  if(g35.length) groups.push({key:'35', label:'3-5 Knowledge Block', grades:g35});
+  return groups;
+}
 
-function onStrandsChanged(){
-  const strands = getSelectedStrands();
-  const area = document.getElementById('specificStandardsArea');
+// ---- Per-group state, keyed by group key ('single', 'K2', or '35') ----
+let unitValues = {};       // {gk: string}
+let lessonValues = {};     // {gk: string}
+let anchorValues = {};     // {gk: grade code}
+let strandsSelected = {};  // {gk: [strandKey,...]}
+let specificSelected = {}; // {gk: {strand|rowIdx: bool}}
+let savedText = {};        // {strand|rowIdx|grade|field: string} -- global; grade codes never collide across groups
+
+function ensureGroupState(gk, grades){
+  if(!(gk in unitValues)) unitValues[gk] = '';
+  if(!(gk in lessonValues)) lessonValues[gk] = '';
+  if(!(gk in strandsSelected)) strandsSelected[gk] = [];
+  if(!(gk in specificSelected)) specificSelected[gk] = {};
+  if(!anchorValues[gk] || !grades.includes(anchorValues[gk])) anchorValues[gk] = grades[grades.length-1];
+}
+
+function buildGroupCardHTML(grp, showLabel){
+  const gk = grp.key;
+  return ''
+    + '<div class="group-card" data-group="'+gk+'">'
+    + '  <div class="plan-head">'
+    + '    <div class="tag">'+(showLabel ? grp.label : 'Knowledge Block')+'</div>'
+    + '    <div class="tag">Grades '+grp.grades.map(g=>GRADE_LABELS[g]).join('/')+'</div>'
+    + '    <div id="tagRow-'+gk+'" style="display:inline;"></div>'
+    + '    <h2 style="font-size:16px;margin:8px 0 0;">'+(showLabel ? grp.label : 'Knowledge Block Plan')+'</h2>'
+    + '    <p id="planSubtitle-'+gk+'"></p>'
+    + '  </div>'
+    + '  <div class="card">'
+    + '    <div class="section">'
+    + '      <h3>Unit &amp; Lesson</h3>'
+    + '      <div style="display:flex;gap:16px;flex-wrap:wrap;">'
+    + '        <div style="flex:1;min-width:200px;"><label>CKLA Unit</label><input type="text" id="unit-'+gk+'" placeholder="e.g., Unit 2: Fables and Stories"></div>'
+    + '        <div style="flex:1;min-width:200px;"><label>Lesson</label><input type="text" id="lesson-'+gk+'" placeholder="e.g., Lesson 14"></div>'
+    + '        <div style="flex:1;min-width:200px;"><label>Planning From (Grade-Level Materials)</label><select id="anchor-'+gk+'"></select></div>'
+    + '      </div>'
+    + '    </div>'
+    + '    <div class="section">'
+    + '      <h3>Standard Strand(s)</h3>'
+    + '      <div class="chip-row" id="strandChecks-'+gk+'"></div>'
+    + '      <div id="specificStandardsArea-'+gk+'"></div>'
+    + '    </div>'
+    + '    <div class="section">'
+    + '      <h3>Suggested Timestamps</h3>'
+    + '      <div id="timestampArea-'+gk+'"></div>'
+    + '      <p style="margin-top:8px;font-size:12px;"><a href="https://docs.google.com/document/d/1YixalDNwCtEw9MipBAhI1w3UnyzGOQc7-5-AUjbbZsU/edit?usp=drive_link" target="_blank" style="color:var(--navy);">Reference: KPBSD Multiage Classroom ELA Playbook (Part II: Structuring the Literacy Block)</a></p>'
+    + '    </div>'
+    + '    <div class="section">'
+    + '      <h3>Target &amp; Task by Grade</h3>'
+    + '      <p style="margin-bottom:10px;">Topic and Text stay fixed above for this block. Adjust up or down by grade level using the standards progression to ensure grade level alignment for all.</p>'
+    + '      <div id="strandPanels-'+gk+'"></div>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+function wireGroupCard(grp){
+  const gk = grp.key;
+  ensureGroupState(gk, grp.grades);
+
+  const unitEl = document.getElementById('unit-'+gk);
+  const lessonEl = document.getElementById('lesson-'+gk);
+  unitEl.value = unitValues[gk];
+  lessonEl.value = lessonValues[gk];
+  unitEl.addEventListener('input', ()=>{ unitValues[gk]=unitEl.value; updateGroupHeader(gk); saveToLocalStorage(); });
+  lessonEl.addEventListener('input', ()=>{ lessonValues[gk]=lessonEl.value; updateGroupHeader(gk); saveToLocalStorage(); });
+
+  const anchorSel = document.getElementById('anchor-'+gk);
+  anchorSel.innerHTML = '';
+  grp.grades.forEach(g=>{
+    const o=document.createElement('option'); o.value=g; o.textContent=GRADE_FULL[g];
+    anchorSel.appendChild(o);
+  });
+  anchorSel.value = anchorValues[gk];
+  anchorSel.addEventListener('change', ()=>{ anchorValues[gk]=anchorSel.value; renderGroupPlan(gk); saveToLocalStorage(); });
+
+  const strandRow = document.getElementById('strandChecks-'+gk);
+  strandRow.innerHTML = '';
+  Object.entries(STANDARDS).forEach(([key,s])=>{
+    const wrap=document.createElement('div'); wrap.className='chip';
+    const input=document.createElement('input'); input.type='checkbox'; input.id='chip-strand-'+gk+'-'+key;
+    input.checked = strandsSelected[gk].includes(key);
+    const lbl=document.createElement('label'); lbl.className='chip-label'; lbl.htmlFor=input.id; lbl.textContent=key; lbl.title=s.name;
+    wrap.appendChild(input); wrap.appendChild(lbl);
+    strandRow.appendChild(wrap);
+    input.addEventListener('change', ()=>{
+      strandsSelected[gk] = Object.keys(STANDARDS).filter(k=>document.getElementById('chip-strand-'+gk+'-'+k).checked);
+      onGroupStrandsChanged(gk);
+      saveToLocalStorage();
+    });
+  });
+
+  buildSpecificStandardsArea(gk);
+  updateGroupHeader(gk);
+}
+
+function buildSpecificStandardsArea(gk){
+  const area = document.getElementById('specificStandardsArea-'+gk);
   area.innerHTML = '';
-  strands.forEach(strandKey=>{
+  strandsSelected[gk].forEach(strandKey=>{
     const group = document.createElement('div');
     group.className = 'specific-group';
     const gl = document.createElement('div');
@@ -239,9 +288,13 @@ function onStrandsChanged(){
       const row = document.createElement('div');
       row.className = 'specific-row';
       const cb = document.createElement('input');
-      cb.type='checkbox'; cb.id='spec-'+strandKey+'-'+rowIdx;
-      cb.checked = !!checkedSpecific[key];
-      cb.addEventListener('change', ()=>{ checkedSpecific[key]=cb.checked; render(); });
+      cb.type='checkbox'; cb.id='spec-'+gk+'-'+strandKey+'-'+rowIdx;
+      cb.checked = !!specificSelected[gk][key];
+      cb.addEventListener('change', ()=>{
+        specificSelected[gk][key] = cb.checked;
+        renderGroupPlan(gk);
+        saveToLocalStorage();
+      });
       const lbl = document.createElement('label');
       lbl.htmlFor = cb.id;
       lbl.innerHTML = '<span class="code">'+strandKey+'.'+r.num+'</span> '+r.title;
@@ -250,50 +303,27 @@ function onStrandsChanged(){
     });
     area.appendChild(group);
   });
-  // clear checked-state for standards whose strand is no longer selected
-  Object.keys(checkedSpecific).forEach(key=>{
+  // drop stale specific-standard selections for strands no longer checked in this group
+  Object.keys(specificSelected[gk]).forEach(key=>{
     const strandKey = key.split('|')[0];
-    if(!strands.includes(strandKey)) delete checkedSpecific[key];
+    if(!strandsSelected[gk].includes(strandKey)) delete specificSelected[gk][key];
   });
-  render();
 }
 
-function getSelectedSpecificStandards(){
-  // returns array of {strand, rowIdx, row} in strand-then-row order
+function onGroupStrandsChanged(gk){
+  buildSpecificStandardsArea(gk);
+  renderGroupPlan(gk);
+}
+
+function getSelectedSpecificFor(gk){
   const result = [];
   Object.keys(STANDARDS).forEach(strandKey=>{
     STANDARDS[strandKey].rows.forEach((r,rowIdx)=>{
       const key = strandKey+'|'+rowIdx;
-      if(checkedSpecific[key]) result.push({strand:strandKey, rowIdx, row:r});
+      if(specificSelected[gk] && specificSelected[gk][key]) result.push({strand:strandKey, rowIdx, row:r});
     });
   });
   return result;
-}
-
-function onGradesChanged(){
-  const grades = getSelectedGrades();
-  const prevAnchor = anchorSelect.value;
-  anchorSelect.innerHTML = '';
-  if(grades.length===0){
-    const o=document.createElement('option'); o.value=''; o.textContent='Check grades first\u2026';
-    anchorSelect.appendChild(o);
-  } else {
-    grades.forEach(g=>{
-      const o=document.createElement('option'); o.value=g; o.textContent=GRADE_FULL[g];
-      anchorSelect.appendChild(o);
-    });
-    anchorSelect.value = grades.includes(prevAnchor) ? prevAnchor : grades[grades.length-1];
-  }
-  render();
-}
-
-// Preserve typed Target/Task text across re-renders (keyed by strand|rowIndex|grade|field)
-let savedText = {};
-
-function saveCurrentText(){
-  document.querySelectorAll('textarea[data-key]').forEach(ta=>{
-    savedText[ta.dataset.key] = ta.value;
-  });
 }
 
 function buildStandardsTable(strandKey, row, gradesInGroup, anchorGrade){
@@ -341,27 +371,95 @@ function timestampHTML(gradesInGroup){
     + '<p style="margin:8px 0 0;font-size:12.5px;color:#556;">Students complete their grade-specific Task at their own Target during independent/small-group time.</p></div>';
 }
 
-function updateHeaderOnly(){
-  const topic = document.getElementById('topicInput').value || '(CKLA Unit not yet entered)';
-  const txt = document.getElementById('textInput').value || '(Lesson not yet entered)';
-  const el = document.getElementById('planSubtitle');
-  if(el && document.getElementById('plan').style.display!=='none'){
-    el.textContent = 'CKLA Unit: '+topic+' \u00b7 Lesson: '+txt;
+function updateGroupHeader(gk){
+  const groups = getGroups(getSelectedGrades());
+  const grp = groups.find(g=>g.key===gk);
+  if(!grp) return;
+  const unit = unitValues[gk] || '(Unit not yet entered)';
+  const lesson = lessonValues[gk] || '(Lesson not yet entered)';
+  const subEl = document.getElementById('planSubtitle-'+gk);
+  if(subEl) subEl.textContent = 'Unit: '+unit+' \u00b7 Lesson: '+lesson;
+  const tagEl = document.getElementById('tagRow-'+gk);
+  if(tagEl){
+    const specific = getSelectedSpecificFor(gk);
+    tagEl.innerHTML = '<span class="tag">Anchor: '+GRADE_FULL[anchorValues[gk]]+'</span>' + specific.map(s=>'<span class="tag">'+s.strand+'.'+s.row.num+'</span>').join('');
+  }
+}
+
+function renderGroupPlan(gk){
+  const groups = getGroups(getSelectedGrades());
+  const grp = groups.find(g=>g.key===gk);
+  if(!grp) return;
+
+  updateGroupHeader(gk);
+
+  const tsEl = document.getElementById('timestampArea-'+gk);
+  if(tsEl) tsEl.innerHTML = timestampHTML(grp.grades);
+
+  const specific = getSelectedSpecificFor(gk);
+  const anchorGrade = anchorValues[gk];
+  let panelHTML = '';
+  specific.forEach(s=>{
+    panelHTML += '<div class="standard-block"><div class="standard-block-label">'+s.strand+'.'+s.row.num+': '+s.row.title+' <span style="color:var(--rose);font-weight:400;">(\u2605 = anchor grade)</span></div>';
+    panelHTML += buildStandardsTable(s.strand, s.row, grp.grades, anchorGrade);
+    panelHTML += buildTargetTaskPlanning(s.strand, s.rowIdx, s.row, grp.grades);
+    panelHTML += '</div>';
+  });
+  const panelsEl = document.getElementById('strandPanels-'+gk);
+  if(panelsEl){
+    panelsEl.innerHTML = panelHTML || '<p style="color:#667;font-style:italic;">Pick at least one specific standard above to start planning Target &amp; Task for this block.</p>';
+    panelsEl.querySelectorAll('textarea[data-key]').forEach(ta=>{
+      ta.addEventListener('input', ()=>{ savedText[ta.dataset.key] = ta.value; saveToLocalStorage(); });
+    });
   }
   saveToLocalStorage();
 }
 
+function buildGroupsContainer(){
+  const grades = getSelectedGrades();
+  const groups = getGroups(grades);
+  const container = document.getElementById('groupsContainer');
+  const emptyEl = document.getElementById('empty');
+  const globalActions = document.getElementById('globalActions');
+
+  if(groups.length===0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    globalActions.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  globalActions.style.display = 'block';
+
+  let banner = '';
+  if(groups.length>1){
+    banner = '<div class="split-banner"><strong>More than 3 grades selected \u2014 split into two Knowledge Blocks.</strong> Knowledge/Integrated instruction generally can\'t scaffold meaningfully across more than about 3 grade levels at once, so each block below gets its own Unit, Lesson, anchor grade, and standards. Plan and deliver these as two separate whole-group lessons.</div>';
+  }
+
+  container.innerHTML = banner + groups.map(grp=>buildGroupCardHTML(grp, groups.length>1)).join('');
+
+  groups.forEach(grp=>{
+    wireGroupCard(grp);
+    renderGroupPlan(grp.key);
+  });
+}
+
+function onGradesChanged(){
+  buildGroupsContainer();
+  saveToLocalStorage();
+}
+
 // ---- Persistence: browser autosave + manual export/import ----
-const STORAGE_KEY = 'kpbsd-knowledge-block-planner-state-v1';
+const STORAGE_KEY = 'kpbsd-knowledge-block-planner-state-v2';
 
 function currentState(){
   return {
     grades: getSelectedGrades(),
-    anchor: anchorSelect.value,
-    strands: getSelectedStrands(),
-    specificStandards: checkedSpecific,
-    topic: document.getElementById('topicInput').value,
-    text: document.getElementById('textInput').value,
+    unit: unitValues,
+    lesson: lessonValues,
+    anchor: anchorValues,
+    strands: strandsSelected,
+    specificStandards: specificSelected,
     savedText: savedText
   };
 }
@@ -382,16 +480,14 @@ function loadFromLocalStorage(){
 function applyState(state){
   if(!state) return;
   ALL_GRADES.forEach(g=>{ document.getElementById('chip-g-'+g).checked = (state.grades||[]).includes(g); });
-  onGradesChanged();
-  if(state.anchor){ anchorSelect.value = state.anchor; }
-  Object.keys(STANDARDS).forEach(s=>{ document.getElementById('chip-strand-'+s).checked = (state.strands||[]).includes(s); });
-  checkedSpecific = Object.assign({}, state.specificStandards || {});
-  onStrandsChanged();
-  document.getElementById('topicInput').value = state.topic || '';
-  document.getElementById('textInput').value = state.text || '';
-  savedText = Object.assign({}, state.savedText || {});
-  render();
-  updateHeaderOnly();
+  unitValues = Object.assign({}, state.unit||{});
+  lessonValues = Object.assign({}, state.lesson||{});
+  anchorValues = Object.assign({}, state.anchor||{});
+  strandsSelected = Object.assign({}, state.strands||{});
+  specificSelected = Object.assign({}, state.specificStandards||{});
+  savedText = Object.assign({}, state.savedText||{});
+  buildGroupsContainer();
+  saveToLocalStorage();
 }
 
 function exportPlan(){
@@ -399,7 +495,8 @@ function exportPlan(){
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const slug = (state.topic || state.text || 'plan').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'plan';
+  const firstUnit = Object.values(state.unit||{}).find(v=>v) || 'plan';
+  const slug = firstUnit.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'plan';
   a.href = url; a.download = 'kpbsd-lesson-plan-'+slug+'.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
@@ -412,7 +509,6 @@ function importPlanFile(e){
   reader.onload = ()=>{
     try{
       applyState(JSON.parse(reader.result));
-      saveToLocalStorage();
     }catch(err){
       alert('This file could not be read as a saved plan. Please choose a plan file downloaded from Save My Plan.');
     }
@@ -426,59 +522,17 @@ document.getElementById('loadBtn').addEventListener('click', ()=>document.getEle
 document.getElementById('loadFileInput').addEventListener('change', importPlanFile);
 
 function clearPlan(){
-  const ok = confirm('Start a new blank plan? This clears every grade, standard, and typed Target/Task currently on screen, and erases this browser\'s autosave. If you want to keep the current plan, click Cancel and use "Save My Plan" first.');
+  const ok = confirm('Start a new blank plan? This clears every grade, unit, lesson, standard, and typed Target/Task currently on screen, and erases this browser\'s autosave. If you want to keep the current plan, click Cancel and use "Save My Plan" first.');
   if(!ok) return;
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){ /* ignore */ }
   ALL_GRADES.forEach(g=>{ document.getElementById('chip-g-'+g).checked = false; });
-  Object.keys(STANDARDS).forEach(s=>{ document.getElementById('chip-strand-'+s).checked = false; });
-  document.getElementById('specificStandardsArea').innerHTML = '';
-  checkedSpecific = {};
-  savedText = {};
-  document.getElementById('topicInput').value = '';
-  document.getElementById('textInput').value = '';
-  onGradesChanged();
-  render();
+  unitValues = {}; lessonValues = {}; anchorValues = {}; strandsSelected = {}; specificSelected = {}; savedText = {};
+  buildGroupsContainer();
 }
 document.getElementById('clearBtn').addEventListener('click', clearPlan);
 
-function render(){
-  saveCurrentText();
-  const selectedGrades = getSelectedGrades();
-  const selectedSpecific = getSelectedSpecificStandards();
-  const anchorGrade = anchorSelect.value;
-  const emptyEl=document.getElementById('empty'), planEl=document.getElementById('plan');
-
-  if(selectedGrades.length===0 || selectedSpecific.length===0 || !anchorGrade){ emptyEl.style.display='block'; planEl.style.display='none'; return; }
-
-  emptyEl.style.display='none'; planEl.style.display='block';
-
-  const bandLabel = selectedGrades.map(g=>GRADE_LABELS[g]).join('/');
-  const tagRow = document.getElementById('tagRow');
-  tagRow.innerHTML = '<span class="tag">Grades '+bandLabel+'</span><span class="tag">Anchor: '+GRADE_FULL[anchorGrade]+'</span>' + selectedSpecific.map(s=>'<span class="tag">'+s.strand+'.'+s.row.num+'</span>').join('');
-  document.getElementById('planTitle').textContent = 'Knowledge Block Plan';
-  updateHeaderOnly();
-
-  document.getElementById('timestampArea').innerHTML = timestampHTML(selectedGrades);
-
-  let html = '';
-  selectedSpecific.forEach(s=>{
-    html += '<div class="standard-block"><div class="standard-block-label">'+s.strand+'.'+s.row.num+': '+s.row.title+' <span style="color:var(--rose);font-weight:400;">(\u2605 = anchor grade)</span></div>';
-    html += buildStandardsTable(s.strand, s.row, selectedGrades, anchorGrade);
-    html += buildTargetTaskPlanning(s.strand, s.rowIdx, s.row, selectedGrades);
-    html += '</div>';
-  });
-  document.getElementById('strandPanels').innerHTML = html;
-
-  document.querySelectorAll('textarea[data-key]').forEach(ta=>{
-    ta.addEventListener('input', ()=>{ savedText[ta.dataset.key] = ta.value; saveToLocalStorage(); });
-  });
-
-  saveToLocalStorage();
-}
-
 if(!loadFromLocalStorage()){
-  onGradesChanged();
-  render();
+  buildGroupsContainer();
 }
 </script>
 </body>
