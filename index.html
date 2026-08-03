@@ -124,7 +124,13 @@
         <h3>Target &amp; Task by Grade</h3>
         <p style="margin-bottom:10px;">Topic and Text stay fixed above. Adjust up or down by grade level using the standards progression to ensure grade level alignment for all.</p>
         <div id="strandPanels"></div>
-        <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+          <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
+          <button class="print-btn" id="saveBtn" style="background:var(--sky);">Save My Plan (Download)</button>
+          <button class="print-btn" id="loadBtn" style="background:var(--teal);color:var(--navy);">Load a Plan</button>
+          <input type="file" id="loadFileInput" accept="application/json" style="display:none;">
+        </div>
+        <p style="font-size:11.5px;color:#556;margin-top:8px;">This browser autosaves your work as you type. Use <strong>Save My Plan</strong> to download a file you can reopen later or on another device, and <strong>Load a Plan</strong> to bring one back in.</p>
       </div>
 
     </div>
@@ -341,7 +347,82 @@ function updateHeaderOnly(){
   if(el && document.getElementById('plan').style.display!=='none'){
     el.textContent = 'CKLA Unit: '+topic+' \u00b7 Lesson: '+txt;
   }
+  saveToLocalStorage();
 }
+
+// ---- Persistence: browser autosave + manual export/import ----
+const STORAGE_KEY = 'kpbsd-knowledge-block-planner-state-v1';
+
+function currentState(){
+  return {
+    grades: getSelectedGrades(),
+    anchor: anchorSelect.value,
+    strands: getSelectedStrands(),
+    specificStandards: checkedSpecific,
+    topic: document.getElementById('topicInput').value,
+    text: document.getElementById('textInput').value,
+    savedText: savedText
+  };
+}
+
+function saveToLocalStorage(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState())); }catch(e){ /* storage unavailable, ignore */ }
+}
+
+function loadFromLocalStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    applyState(JSON.parse(raw));
+    return true;
+  }catch(e){ return false; }
+}
+
+function applyState(state){
+  if(!state) return;
+  ALL_GRADES.forEach(g=>{ document.getElementById('chip-g-'+g).checked = (state.grades||[]).includes(g); });
+  onGradesChanged();
+  if(state.anchor){ anchorSelect.value = state.anchor; }
+  Object.keys(STANDARDS).forEach(s=>{ document.getElementById('chip-strand-'+s).checked = (state.strands||[]).includes(s); });
+  checkedSpecific = Object.assign({}, state.specificStandards || {});
+  onStrandsChanged();
+  document.getElementById('topicInput').value = state.topic || '';
+  document.getElementById('textInput').value = state.text || '';
+  savedText = Object.assign({}, state.savedText || {});
+  render();
+  updateHeaderOnly();
+}
+
+function exportPlan(){
+  const state = currentState();
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const slug = (state.topic || state.text || 'plan').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'plan';
+  a.href = url; a.download = 'kpbsd-lesson-plan-'+slug+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importPlanFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      applyState(JSON.parse(reader.result));
+      saveToLocalStorage();
+    }catch(err){
+      alert('This file could not be read as a saved plan. Please choose a plan file downloaded from Save My Plan.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+document.getElementById('saveBtn').addEventListener('click', exportPlan);
+document.getElementById('loadBtn').addEventListener('click', ()=>document.getElementById('loadFileInput').click());
+document.getElementById('loadFileInput').addEventListener('change', importPlanFile);
 
 function render(){
   saveCurrentText();
@@ -372,12 +453,16 @@ function render(){
   document.getElementById('strandPanels').innerHTML = html;
 
   document.querySelectorAll('textarea[data-key]').forEach(ta=>{
-    ta.addEventListener('input', ()=>{ savedText[ta.dataset.key] = ta.value; });
+    ta.addEventListener('input', ()=>{ savedText[ta.dataset.key] = ta.value; saveToLocalStorage(); });
   });
+
+  saveToLocalStorage();
 }
 
-onGradesChanged();
-render();
+if(!loadFromLocalStorage()){
+  onGradesChanged();
+  render();
+}
 </script>
 </body>
 </html>
