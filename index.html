@@ -89,12 +89,12 @@
     </div>
     <div class="field full" style="display:flex;gap:16px;flex-wrap:wrap;">
       <div style="flex:1;min-width:220px;">
-        <label for="topicInput">Topic (shared, static)</label>
-        <input type="text" id="topicInput" placeholder="e.g., Chinese New Year & Diwali">
+        <label for="topicInput">CKLA Unit (shared, static)</label>
+        <input type="text" id="topicInput" placeholder="e.g., Unit 2: Fables and Stories">
       </div>
       <div style="flex:1;min-width:220px;">
-        <label for="textInput">Text / Read-Aloud (shared, static)</label>
-        <input type="text" id="textInput" placeholder="e.g., Unit 2, Lesson 14 read-aloud">
+        <label for="textInput">Lesson (shared, static)</label>
+        <input type="text" id="textInput" placeholder="e.g., Lesson 14">
       </div>
     </div>
     <div class="field full">
@@ -117,11 +117,12 @@
       <div class="section">
         <h3>Suggested Timestamps</h3>
         <div id="timestampArea"></div>
+        <p style="margin-top:8px;font-size:12px;"><a href="https://docs.google.com/document/d/1YixalDNwCtEw9MipBAhI1w3UnyzGOQc7-5-AUjbbZsU/edit?usp=drive_link" target="_blank" style="color:var(--navy);">Reference: KPBSD Multiage Classroom ELA Playbook (Part II: Structuring the Literacy Block)</a></p>
       </div>
 
       <div class="section">
         <h3>Target &amp; Task by Grade</h3>
-        <p style="margin-bottom:10px;">Topic and Text stay fixed above. The anchor grade (the one whose materials you're planning from) keeps Target/Task at full rigor &mdash; adjust the rest up or down from there using the progression.</p>
+        <p style="margin-bottom:10px;">Topic and Text stay fixed above. Adjust up or down by grade level using the standards progression to ensure grade level alignment for all.</p>
         <div id="strandPanels"></div>
         <button class="print-btn" onclick="window.print()">Print / Save This Plan</button>
       </div>
@@ -316,17 +317,29 @@ function buildTargetTaskPlanning(strandKey, rowIdx, row, gradesInGroup){
 function timestampHTML(gradesInGroup){
   const scaffolded = gradesInGroup.length > 1;
   if(!scaffolded){
-    return '<div class="timestamp-box"><strong>Single grade, full time:</strong> ~35&ndash;45 min total &mdash; roughly 10 min Background/Intro, 20&ndash;30 min Text/Read-Aloud, 5&ndash;10 min Discussion/Application. No scaffolding needed at one grade level.</div>';
+    return '<div class="timestamp-box"><strong>Single grade, full time (~35&ndash;45 min total):</strong>'
+      + '<ul style="margin:8px 0 0;padding-left:20px;">'
+      + '<li>10 min &mdash; Background/Intro</li>'
+      + '<li>20&ndash;30 min &mdash; Text/Read-Aloud</li>'
+      + '<li>5&ndash;10 min &mdash; Discussion/Application</li>'
+      + '</ul>'
+      + '<p style="margin:8px 0 0;font-size:12.5px;color:#556;">No scaffolding needed at one grade level.</p></div>';
   }
-  return '<div class="timestamp-box"><strong>Scaffolded across '+gradesInGroup.length+' grades:</strong> ~25 min whole-group total &mdash; 3&ndash;5 min Background/Intro (shared throughline only), 15&ndash;17 min Text/Read-Aloud (limit mid-text discussion, prioritize end-of-text comprehension), 4&ndash;5 min Discussion/Task Prep (preview the task, then send students to independent or small-group time to complete their grade-specific Task at their own Target).</div>';
+  return '<div class="timestamp-box"><strong>Scaffolded across '+gradesInGroup.length+' grades (~25 min whole-group total):</strong>'
+    + '<ul style="margin:8px 0 0;padding-left:20px;">'
+    + '<li>3&ndash;5 min &mdash; Background/Intro (shared throughline only)</li>'
+    + '<li>15&ndash;17 min &mdash; Text/Read-Aloud (limit mid-text discussion, prioritize end-of-text comprehension)</li>'
+    + '<li>4&ndash;5 min &mdash; Discussion/Task Prep (preview the task, then send students to independent or small-group time)</li>'
+    + '</ul>'
+    + '<p style="margin:8px 0 0;font-size:12.5px;color:#556;">Students complete their grade-specific Task at their own Target during independent/small-group time.</p></div>';
 }
 
 function updateHeaderOnly(){
-  const topic = document.getElementById('topicInput').value || '(topic not yet entered)';
-  const txt = document.getElementById('textInput').value || '(text not yet entered)';
+  const topic = document.getElementById('topicInput').value || '(CKLA Unit not yet entered)';
+  const txt = document.getElementById('textInput').value || '(Lesson not yet entered)';
   const el = document.getElementById('planSubtitle');
   if(el && document.getElementById('plan').style.display!=='none'){
-    el.textContent = 'Topic: '+topic+' \u00b7 Text: '+txt;
+    el.textContent = 'CKLA Unit: '+topic+' \u00b7 Lesson: '+txt;
   }
 }
 
