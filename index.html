@@ -343,7 +343,7 @@ function refreshUnitOptions(gk, grade, preserveDomainKey){
   const lessonSel = document.getElementById('curr-lesson-'+gk);
   const unitsForGrade = Object.entries(DOMAIN_META).filter(([k,m])=>m.grade===grade);
   unitSel.innerHTML = '';
-  const placeholder = document.createElement('option'); placeholder.value=''; placeholder.textContent='Select a unit\u2026';
+  const placeholder = document.createElement('option'); placeholder.value=''; placeholder.textContent = grade ? 'Select a unit\u2026' : 'Select grade first\u2026';
   unitSel.appendChild(placeholder);
   unitsForGrade.forEach(([key, meta])=>{
     const o = document.createElement('option'); o.value = key; o.textContent = meta.unitLabel;
@@ -417,14 +417,24 @@ function applyLessonSelection(gk, domainKey, idx){
 }
 
 // ---- Grouping logic: >3 grades forces a split into K-2 / 3-5 Knowledge Blocks ----
+// K-2 uses "Knowledge" (Knowledge Strand); 3-5 uses "Integrated" -- same concept, different
+// name by grade band. A room spanning both gets the combined label.
+function getBlockLabel(grades){
+  const hasK2 = grades.some(g=>['K','G1','G2'].includes(g));
+  const has35 = grades.some(g=>['G3','G4','G5'].includes(g));
+  if(hasK2 && has35) return 'Knowledge/Integrated Block';
+  if(has35) return 'Integrated Block';
+  return 'Knowledge Block';
+}
+
 function getGroups(grades){
   if(grades.length===0) return [];
-  if(grades.length<=3) return [{key:'single', label:'Knowledge Block', grades: grades.slice()}];
+  if(grades.length<=3) return [{key:'single', label:getBlockLabel(grades), grades: grades.slice()}];
   const k2 = grades.filter(g=>['K','G1','G2'].includes(g));
   const g35 = grades.filter(g=>['G3','G4','G5'].includes(g));
   const groups=[];
   if(k2.length) groups.push({key:'K2', label:'K-2 Knowledge Block', grades:k2});
-  if(g35.length) groups.push({key:'35', label:'3-5 Knowledge Block', grades:g35});
+  if(g35.length) groups.push({key:'35', label:'3-5 Integrated Block', grades:g35});
   return groups;
 }
 
@@ -441,7 +451,8 @@ function ensureGroupState(gk, grades){
   if(!(gk in lessonValues)) lessonValues[gk] = '';
   if(!(gk in strandsSelected)) strandsSelected[gk] = [];
   if(!(gk in specificSelected)) specificSelected[gk] = {};
-  if(!anchorValues[gk] || !grades.includes(anchorValues[gk])) anchorValues[gk] = grades[grades.length-1];
+  if(anchorValues[gk] && !grades.includes(anchorValues[gk])) anchorValues[gk] = '';
+  if(!(gk in anchorValues)) anchorValues[gk] = '';
 }
 
 function buildGroupCardHTML(grp, showLabel){
@@ -449,10 +460,10 @@ function buildGroupCardHTML(grp, showLabel){
   return ''
     + '<div class="group-card" data-group="'+gk+'">'
     + '  <div class="plan-head">'
-    + '    <div class="tag">'+(showLabel ? grp.label : 'Knowledge Block')+'</div>'
+    + '    <div class="tag">'+grp.label+'</div>'
     + '    <div class="tag">Grades '+grp.grades.map(g=>GRADE_LABELS[g]).join('/')+'</div>'
     + '    <div id="tagRow-'+gk+'" style="display:inline;"></div>'
-    + '    <h2 style="font-size:16px;margin:8px 0 0;">'+(showLabel ? grp.label : 'Knowledge Block Plan')+'</h2>'
+    + '    <h2 style="font-size:16px;margin:8px 0 0;">'+grp.label+' Plan</h2>'
     + '    <p id="planSubtitle-'+gk+'"></p>'
     + '  </div>'
     + '  <div class="card">'
@@ -493,6 +504,8 @@ function wireGroupCard(grp){
 
   const anchorSel = document.getElementById('anchor-'+gk);
   anchorSel.innerHTML = '';
+  const anchorPlaceholder = document.createElement('option'); anchorPlaceholder.value=''; anchorPlaceholder.textContent='Select a grade\u2026';
+  anchorSel.appendChild(anchorPlaceholder);
   grp.grades.forEach(g=>{
     const o=document.createElement('option'); o.value=g; o.textContent=GRADE_FULL[g];
     anchorSel.appendChild(o);
@@ -688,7 +701,8 @@ function updateGroupHeader(gk){
   const tagEl = document.getElementById('tagRow-'+gk);
   if(tagEl){
     const specific = getSelectedSpecificFor(gk);
-    tagEl.innerHTML = '<span class="tag">Anchor: '+GRADE_FULL[anchorValues[gk]]+'</span>' + specific.map(s=>'<span class="tag">'+s.strand+'.'+s.row.num+'</span>').join('');
+    const anchorLabel = anchorValues[gk] ? GRADE_FULL[anchorValues[gk]] : 'Not yet selected';
+    tagEl.innerHTML = '<span class="tag">Anchor: '+anchorLabel+'</span>' + specific.map(s=>'<span class="tag">'+s.strand+'.'+s.row.num+'</span>').join('');
   }
 }
 
@@ -763,7 +777,7 @@ function buildGroupsContainer(){
 
   let banner = '';
   if(groups.length>1){
-    banner = '<div class="split-banner"><strong>More than 3 grades selected \u2014 split into two Knowledge/Integrated Blocks.</strong> Knowledge/Integrated instruction generally can\'t scaffold meaningfully across more than about 3 grade levels at once, so each block below gets its own Unit, Lesson, anchor grade, and standards. Plan and deliver these as two separate whole-group lessons.</div>';
+    banner = '<div class="split-banner"><strong>More than 3 grades selected \u2014 split into a K-2 Knowledge Block and a 3-5 Integrated Block.</strong> Knowledge/Integrated instruction generally can\'t scaffold meaningfully across more than about 3 grade levels at once, so each block below gets its own Unit, Lesson, anchor grade, and standards. Plan and deliver these as two separate whole-group lessons.</div>';
   }
 
   container.innerHTML = banner + groups.map(grp=>buildGroupCardHTML(grp, groups.length>1)).join('');
