@@ -1023,10 +1023,25 @@ function formatCenterSuggestions(pattern){
 // Map a Knowledge/Integrated lesson (grade + selected strands) to relevant Playbook
 // centers -- unlike Skills Strand, these aren't lesson-specific patterns, so we lean
 // on grade band + which standard strands are in focus for this block.
-function mapKnowledgeLessonToCenters(grade, strandsSelected, hasSpellingWords){
+// These four are relevant to literally every Knowledge/Integrated lesson at every
+// grade -- showing them on every table row was pure repetition. Shown once per
+// grade section instead (see formatUniversalCentersBox), not per lesson.
+const UNIVERSAL_KNOWLEDGE_KEYS = ['knowledgeBuilders','digitalLibrary','independentReading','workbook'];
+
+function formatUniversalCentersBox(){
+  const items = UNIVERSAL_KNOWLEDGE_KEYS.map(k=>{
+    const c = CENTER_DEFINITIONS[k];
+    return '<div style="margin-bottom:4px;"><span class="pattern-pill" style="background:var(--teal);color:var(--navy);">'+c.name+'</span> <span style="color:#889;font-size:11px;">('+c.band+')</span><br><span style="font-size:12px;color:#556;">'+c.desc+'</span></div>';
+  }).join('');
+  return '<div class="curriculum-box" style="border-left-color:var(--sky);margin-bottom:12px;"><h4>Applies to every lesson in this unit</h4>'+items+'</div>';
+}
+
+// Returns only the centers that vary lesson to lesson (strand-conditional), not
+// the four universal ones above.
+function mapKnowledgeLessonToCenters(grade, strandsSelected){
   const isK2 = ['K','G1','G2'].includes(grade);
   const is35 = ['G3','G4','G5'].includes(grade);
-  const keys = ['knowledgeBuilders','digitalLibrary']; // unit-specific, always relevant
+  const keys = [];
   if(strandsSelected.includes('L')){
     if(is35) keys.push('vocabulary');
     if(isK2) keys.push('grammar');
@@ -1038,30 +1053,24 @@ function mapKnowledgeLessonToCenters(grade, strandsSelected, hasSpellingWords){
   if(strandsSelected.includes('SL') && isK2){
     keys.push('oralLanguage');
   }
-  keys.push('independentReading','workbook');
-  // If this specific lesson has a real Spelling Words list (G3-5), move Workbook
-  // Practice to the front and flag it -- this is the one center whose suggestion
-  // becomes lesson-specific rather than just grade-band-generic.
-  if(hasSpellingWords){
-    const idx = keys.indexOf('workbook');
-    if(idx > -1) keys.splice(idx,1);
-    keys.unshift('workbook');
-  }
   return keys;
 }
 
 function formatKnowledgeCenterSuggestions(grade, strandsSelected, hasSpellingWords){
-  if(!grade || !strandsSelected || !strandsSelected.length){
-    return '<span class="pattern-none">&mdash; select a grade and at least one standard to see suggested centers &mdash;</span>';
+  const keys = mapKnowledgeLessonToCenters(grade, strandsSelected||[]);
+  let html = '';
+  if(hasSpellingWords){
+    html += '<div style="margin-bottom:6px;font-size:12px;"><strong style="color:var(--rose);">Spelling Words available</strong> \u2014 use them directly for this lesson\'s Workbook Practice instead of a generic page.</div>';
   }
-  const keys = mapKnowledgeLessonToCenters(grade, strandsSelected, hasSpellingWords);
-  return keys.map(k=>{
+  if(!keys.length){
+    html += hasSpellingWords ? '' : '<span class="pattern-none">&mdash; just the universal centers above &mdash;</span>';
+    return html;
+  }
+  html += keys.map(k=>{
     const c = CENTER_DEFINITIONS[k];
-    const desc = (k==='workbook' && hasSpellingWords)
-      ? "This lesson has a real spelling word list (see Spelling Words above) \u2014 use it directly for this center's practice pages, rather than a generic workbook page."
-      : c.desc;
-    return '<div style="margin-bottom:4px;"><span class="pattern-pill" style="background:var(--teal);color:var(--navy);">'+c.name+'</span> <span style="color:#889;font-size:11px;">('+c.band+')</span><br><span style="font-size:12px;color:#556;">'+desc+'</span></div>';
+    return '<div style="margin-bottom:4px;"><span class="pattern-pill" style="background:var(--teal);color:var(--navy);">'+c.name+'</span> <span style="color:#889;font-size:11px;">('+c.band+')</span><br><span style="font-size:12px;color:#556;">'+c.desc+'</span></div>';
   }).join('');
+  return html;
 }
 
 function formatSkillsPattern(p){
@@ -1120,13 +1129,14 @@ function deriveStrandsFromStandards(standards){
 function renderKnowledgeLessonTable(unitKey){
   const lessons = CURRICULUM_DATA[unitKey];
   const grade = DOMAIN_META[unitKey].grade;
-  let html = '<table class="skills-table"><tr><th>Lesson</th><th>Title</th><th>Potential Center(s)</th><th>Standards</th></tr>';
+  let html = formatUniversalCentersBox();
+  html += '<table class="skills-table"><tr><th>Lesson</th><th>Title</th><th>Lesson-Specific Center(s)</th><th>Standards</th></tr>';
   lessons.forEach(l=>{
     const strands = deriveStrandsFromStandards(l.standards);
     const hasSpelling = !!l.spellingWords;
     const centersHTML = strands.length
       ? formatKnowledgeCenterSuggestions(grade, strands, hasSpelling)
-      : '<span class="pattern-none">&mdash; no standards tagged for this lesson &mdash;</span>';
+      : (hasSpelling ? formatKnowledgeCenterSuggestions(grade, [], hasSpelling) : '<span class="pattern-none">&mdash; no standards tagged for this lesson &mdash;</span>');
     html += '<tr><td>'+l.lesson+'</td><td>'+l.title+'</td><td>'+centersHTML+'</td><td style="font-size:12px;">'+(l.standards&&l.standards.length?l.standards.join(', '):'&mdash;')+'</td></tr>';
   });
   html += '</table>';
