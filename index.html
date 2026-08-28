@@ -1078,14 +1078,22 @@ function mapKnowledgeLessonToCenters(grade, strandsSelected, specificRows){
   return keys;
 }
 
-function formatKnowledgeCenterSuggestions(grade, strandsSelected, hasSpellingWords, specificRows){
+function formatKnowledgeCenterSuggestions(grade, strandsSelected, spellingWords, specificRows){
   const keys = mapKnowledgeLessonToCenters(grade, strandsSelected||[], specificRows);
   let html = '';
-  if(hasSpellingWords){
-    html += '<div style="margin-bottom:6px;font-size:12px;"><strong style="color:var(--rose);">Spelling Words available</strong> \u2014 use them directly for this lesson\'s Workbook Practice instead of a generic page.</div>';
+  if(spellingWords){
+    html += '<div style="margin-bottom:8px;font-size:12px;"><strong style="color:var(--rose);">This lesson\'s Spelling Words:</strong> ';
+    if(spellingWords.format === 'numbered_list'){
+      html += spellingWords.words.join(', ');
+      if(spellingWords.challengeWords && spellingWords.challengeWords.length) html += '  |  Challenge: '+spellingWords.challengeWords.join(', ');
+      if(spellingWords.contentWords && spellingWords.contentWords.length) html += '  |  Content: '+spellingWords.contentWords.join(', ');
+    } else if(spellingWords.format === 'paired_table'){
+      html += spellingWords.pairs.map(p=>p[0]+'\u2192'+p[1]).join(', ');
+    }
+    html += '</div>';
   }
   if(!keys.length){
-    html += hasSpellingWords ? '' : '<span class="pattern-none">&mdash; just the universal centers above &mdash;</span>';
+    html += spellingWords ? '' : '<span class="pattern-none">&mdash; just the universal centers above &mdash;</span>';
     return html;
   }
   html += keys.map(k=>{
@@ -1217,7 +1225,7 @@ function renderLiveGroupCenters(gk, grades){
   // not silently revert to whatever the lesson originally auto-loaded.
   const strands = strandsSelected[gk] || [];
   const specificRows = getSelectedSpecificFor(gk);
-  const hasSpelling = !!lessonObj.spellingWords;
+  const spellingWords = lessonObj.spellingWords || null;
   let html = '<p style="font-size:12.5px;color:#556;margin:0 0 10px;"><strong>Currently selected on Multiage tab:</strong> '+unitValues[gk]+' \u2014 '+lessonValues[gk]+' <span style="color:#889;">(anchor: '+GRADE_FULL[anchorGrade]+')</span></p>';
   if(!strands.length){
     html += '<p style="font-size:12.5px;color:#889;font-style:italic;margin:0 0 10px;">No standard strands currently checked for this block on the Multiage tab \u2014 check at least one to see lesson-specific centers below.</p>';
@@ -1227,9 +1235,17 @@ function renderLiveGroupCenters(gk, grades){
   // (scaffolded via Target/Task), so lesson-specific centers should reflect each
   // grade's own band -- not just the anchor's -- even though Unit/Lesson itself
   // is anchor-driven.
-  grades.forEach(g=>{
-    const label = GRADE_FULL[g] + (g===anchorGrade ? ' <span style="color:#889;font-weight:400;">(anchor)</span>' : '');
-    html += '<div class="curriculum-box" style="border-left-color:var(--teal);"><h4>Lesson-Specific Center(s) \u2014 '+label+'</h4>' + formatKnowledgeCenterSuggestions(g, strands, hasSpelling, specificRows) + '</div>';
+  // Group grades by band -- suggestions only ever differ between K-2 and 3-5
+  // (the Playbook's own center list doesn't distinguish any finer than that), so
+  // showing one box per individual grade within the same band just repeats the
+  // identical suggestion 2-3 times. One box per band that actually needs one.
+  const k2Grades = grades.filter(g=>['K','G1','G2'].includes(g));
+  const g35Grades = grades.filter(g=>['G3','G4','G5'].includes(g));
+  [k2Grades, g35Grades].forEach(bandGrades=>{
+    if(!bandGrades.length) return;
+    const labelGrades = bandGrades.map(g=>GRADE_FULL[g] + (g===anchorGrade ? ' (anchor)' : '')).join(', ');
+    // Any grade in the band works to compute the suggestion, since it's band-driven.
+    html += '<div class="curriculum-box" style="border-left-color:var(--teal);"><h4>Lesson-Specific Center(s) \u2014 '+labelGrades+'</h4>' + formatKnowledgeCenterSuggestions(bandGrades[0], strands, spellingWords, specificRows) + '</div>';
   });
   return html;
 }
