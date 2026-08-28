@@ -137,7 +137,7 @@
   <div class="controls">
     <div class="field full">
       <label>Potential Centers</label>
-      <p style="font-size:11.5px;color:#556;margin:0 0 10px;">Reflects whichever grades are checked in "Grades in Your Cluster" on the Multiage tab &mdash; one section per grade. K-2 sections show both Skills Strand and Knowledge Strand centers side by side, since both exist at those grades; Grade 3-5 sections show Knowledge/Integrated centers only, since those grades don't have a separate Skills Strand. Either way, centers are suggested lesson by lesson from KPBSD's CKLA centers (per the Multiage ELA Playbook, Part III).</p>
+      <p style="font-size:11.5px;color:#556;margin:0 0 10px;">One section per Knowledge/Integrated block on the Multiage tab. Knowledge/Integrated centers here always reflect whatever Unit and Lesson is currently selected there for that block's anchor grade &mdash; there's nothing separate to pick, since kids are already in that lesson. Skills Strand (K-2 only, a separate single-grade-level track) still has its own picker below, since it isn't tracked on the Multiage tab at all. Centers are suggested from KPBSD's CKLA centers (per the Multiage ELA Playbook, Part III).</p>
       <div id="skillsGradeSections"></div>
     </div>
   </div>
@@ -456,6 +456,7 @@ function applyLessonSelection(gk, domainKey, idx){
 
   buildSpecificStandardsArea(gk);
   renderGroupPlan(gk);
+  buildSkillsTabContent();
   saveToLocalStorage();
 }
 
@@ -559,6 +560,7 @@ function wireGroupCard(grp){
     refreshUnitOptions(gk, anchorValues[gk], false);
     updateGroupHeader(gk);
     renderGroupPlan(gk);
+    buildSkillsTabContent();
     saveToLocalStorage();
   });
 
@@ -621,6 +623,7 @@ function buildSpecificStandardsArea(gk){
       cb.addEventListener('change', ()=>{
         specificSelected[gk][key] = cb.checked;
         renderGroupPlan(gk);
+        buildSkillsTabContent();
         saveToLocalStorage();
       });
       const lbl = document.createElement('label');
@@ -641,6 +644,7 @@ function buildSpecificStandardsArea(gk){
 function onGroupStrandsChanged(gk){
   buildSpecificStandardsArea(gk);
   renderGroupPlan(gk);
+  buildSkillsTabContent();
 }
 
 function getSelectedSpecificFor(gk){
@@ -1038,13 +1042,31 @@ function formatUniversalCentersBox(){
 
 // Returns only the centers that vary lesson to lesson (strand-conditional), not
 // the four universal ones above.
-function mapKnowledgeLessonToCenters(grade, strandsSelected){
+function mapKnowledgeLessonToCenters(grade, strandsSelected, specificRows){
   const isK2 = ['K','G1','G2'].includes(grade);
   const is35 = ['G3','G4','G5'].includes(grade);
   const keys = [];
   if(strandsSelected.includes('L')){
-    if(is35) keys.push('vocabulary');
-    if(isK2) keys.push('grammar');
+    // L.1-3 (Grammar/Usage, Capitalization/Punctuation/Spelling, Knowledge of
+    // Language) are conventions-focused; L.4-6 (Word Meaning, Figurative
+    // Language, Academic/Domain Vocabulary) are vocabulary-focused. The Playbook
+    // has distinct centers for each, so use whichever specific L rows are
+    // actually checked to pick the right one, rather than lumping all of L
+    // strand into one guess.
+    const lRows = (specificRows||[]).filter(r=>r.strand==='L').map(r=>r.row.num);
+    const hasGrammarRow = lRows.some(n=>n<=3);
+    const hasVocabRow = lRows.some(n=>n>=4);
+    if(!lRows.length){
+      // No specific L row checked, just the broad strand -- fall back to old behavior.
+      if(is35) keys.push('vocabulary');
+      if(isK2) keys.push('grammar');
+    } else {
+      // Playbook has no K-2-specific vocabulary center, so vocab-focused rows
+      // (L.4-6) only add a suggestion at 3-5; a K-2 room with only vocab rows
+      // checked correctly gets nothing extra here rather than a mislabeled one.
+      if(hasVocabRow && is35) keys.push('vocabulary');
+      if(hasGrammarRow && isK2) keys.push('grammar');
+    }
   }
   if(strandsSelected.includes('RL') || strandsSelected.includes('RI')){
     if(isK2) keys.push('comprehension');
@@ -1056,8 +1078,8 @@ function mapKnowledgeLessonToCenters(grade, strandsSelected){
   return keys;
 }
 
-function formatKnowledgeCenterSuggestions(grade, strandsSelected, hasSpellingWords){
-  const keys = mapKnowledgeLessonToCenters(grade, strandsSelected||[]);
+function formatKnowledgeCenterSuggestions(grade, strandsSelected, hasSpellingWords, specificRows){
+  const keys = mapKnowledgeLessonToCenters(grade, strandsSelected||[], specificRows);
   let html = '';
   if(hasSpellingWords){
     html += '<div style="margin-bottom:6px;font-size:12px;"><strong style="color:var(--rose);">Spelling Words available</strong> \u2014 use them directly for this lesson\'s Workbook Practice instead of a generic page.</div>';
@@ -1173,29 +1195,66 @@ function buildUnitSubsection(grade, source){
   return {html, wire};
 }
 
+// Renders the Knowledge/Integrated centers for a group's CURRENTLY selected
+// lesson on the Multiage tab -- no separate picker here, since the whole point
+// is that kids are already in whatever Unit/Lesson is chosen there.
+function renderLiveGroupCenters(gk, grades){
+  const anchorGrade = anchorValues[gk];
+  const sel = curriculumSelection[gk] || {};
+  if(!anchorGrade){
+    return '<p style="font-size:13px;color:#889;font-style:italic;">No anchor grade selected yet for this block on the Multiage tab.</p>';
+  }
+  if(!sel.domainKey || sel.lessonIdx===undefined || sel.lessonIdx===''){
+    return '<p style="font-size:13px;color:#889;font-style:italic;">Select a Unit and Lesson for '+GRADE_FULL[anchorGrade]+' (this block\'s anchor grade) on the Multiage tab to see aligned centers here.</p>';
+  }
+  const lessonObj = CURRICULUM_DATA[sel.domainKey][sel.lessonIdx];
+  if(!lessonObj){
+    return '<p style="font-size:13px;color:#889;font-style:italic;">Select a Unit and Lesson for '+GRADE_FULL[anchorGrade]+' (this block\'s anchor grade) on the Multiage tab to see aligned centers here.</p>';
+  }
+  // Use the block's LIVE, teacher-adjusted standard strands (strandsSelected[gk])
+  // rather than re-deriving fresh from the raw lesson data -- if a teacher has
+  // unchecked or added a strand on the Multiage tab, this should track that,
+  // not silently revert to whatever the lesson originally auto-loaded.
+  const strands = strandsSelected[gk] || [];
+  const specificRows = getSelectedSpecificFor(gk);
+  const hasSpelling = !!lessonObj.spellingWords;
+  let html = '<p style="font-size:12.5px;color:#556;margin:0 0 10px;"><strong>Currently selected on Multiage tab:</strong> '+unitValues[gk]+' \u2014 '+lessonValues[gk]+' <span style="color:#889;">(anchor: '+GRADE_FULL[anchorGrade]+')</span></p>';
+  if(!strands.length){
+    html += '<p style="font-size:12.5px;color:#889;font-style:italic;margin:0 0 10px;">No standard strands currently checked for this block on the Multiage tab \u2014 check at least one to see lesson-specific centers below.</p>';
+  }
+  html += formatUniversalCentersBox();
+  // Every grade physically in this block engages with the same lesson topic
+  // (scaffolded via Target/Task), so lesson-specific centers should reflect each
+  // grade's own band -- not just the anchor's -- even though Unit/Lesson itself
+  // is anchor-driven.
+  grades.forEach(g=>{
+    const label = GRADE_FULL[g] + (g===anchorGrade ? ' <span style="color:#889;font-weight:400;">(anchor)</span>' : '');
+    html += '<div class="curriculum-box" style="border-left-color:var(--teal);"><h4>Lesson-Specific Center(s) \u2014 '+label+'</h4>' + formatKnowledgeCenterSuggestions(g, strands, hasSpelling, specificRows) + '</div>';
+  });
+  return html;
+}
+
 function buildSkillsTabContent(){
   const checked = getSelectedGrades();
   if(!checked.length){
     skillsSectionsEl.innerHTML = '<p style="font-size:13px;color:#667;font-style:italic;">Check grades in "Grades in Your Cluster" (Multiage tab) to see their Potential Centers here.</p>';
     return;
   }
+  const groups = getGroups(checked);
   let html = '';
   const wireFns = [];
-  checked.forEach(g=>{
-    const isSkillsGrade = SKILLS_GRADES.includes(g);
-    html += '<div style="margin-bottom:24px;"><h3 style="color:var(--navy);font-size:16px;margin:0 0 10px;">'+GRADE_FULL[g]+'</h3>';
-    if(isSkillsGrade){
+  groups.forEach(grp=>{
+    const gk = grp.key;
+    html += '<div style="margin-bottom:28px;"><h3 style="color:var(--navy);font-size:16px;margin:0 0 4px;">'+grp.label+' <span style="font-weight:400;color:#889;font-size:12px;">(Grades '+grp.grades.map(g=>GRADE_LABELS[g]).join('/')+')</span></h3>';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;">Knowledge/Integrated <span style="font-weight:400;text-transform:none;">(from the Multiage tab\'s current selection)</span></div>';
+    html += renderLiveGroupCenters(gk, grp.grades);
+    const skillsGradesInGroup = grp.grades.filter(g=>SKILLS_GRADES.includes(g));
+    skillsGradesInGroup.forEach(g=>{
+      html += '<div style="font-size:12px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.03em;margin:16px 0 4px;">Skills Strand \u2014 '+GRADE_FULL[g]+'</div>';
       const skills = buildUnitSubsection(g, 'skills');
-      const knowledge = buildUnitSubsection(g, 'knowledge');
-      html += '<div style="font-size:12px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;">Skills Strand</div>' + skills.html
-        + '<div style="font-size:12px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 4px;">Knowledge Strand</div>' + knowledge.html;
-      wireFns.push(skills.wire, knowledge.wire);
-    } else {
-      html += '<p style="color:#889;font-size:11px;margin:0 0 8px;">No separate Skills Strand at this grade \u2014 sourced from Knowledge/Integrated units, with standards auto-detected per lesson.</p>';
-      const knowledge = buildUnitSubsection(g, 'knowledge');
-      html += knowledge.html;
-      wireFns.push(knowledge.wire);
-    }
+      html += skills.html;
+      wireFns.push(skills.wire);
+    });
     html += '</div>';
   });
   skillsSectionsEl.innerHTML = html;
