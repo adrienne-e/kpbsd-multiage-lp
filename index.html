@@ -1160,7 +1160,7 @@ function renderKnowledgeLessonTable(unitKey){
   const lessons = CURRICULUM_DATA[unitKey];
   const grade = DOMAIN_META[unitKey].grade;
   let html = formatUniversalCentersBox();
-  html += '<table class="skills-table"><tr><th>Lesson</th><th>Title</th><th>Lesson-Specific Center(s)</th><th>Standards</th></tr>';
+  html += '<table class="skills-table"><tr><th>Lesson</th><th>Title</th><th>Centers to Support Lesson-Level Learning</th><th>Standards</th></tr>';
   lessons.forEach(l=>{
     const strands = deriveStrandsFromStandards(l.standards);
     const hasSpelling = !!l.spellingWords;
@@ -1245,7 +1245,7 @@ function renderLiveGroupCenters(gk, grades){
     if(!bandGrades.length) return;
     const labelGrades = bandGrades.map(g=>GRADE_FULL[g] + (g===anchorGrade ? ' (anchor)' : '')).join(', ');
     // Any grade in the band works to compute the suggestion, since it's band-driven.
-    html += '<div class="curriculum-box" style="border-left-color:var(--teal);"><h4>Lesson-Specific Center(s) \u2014 '+labelGrades+'</h4>' + formatKnowledgeCenterSuggestions(bandGrades[0], strands, spellingWords, specificRows) + '</div>';
+    html += '<div class="curriculum-box" style="border-left-color:var(--teal);"><h4>Centers to Support Lesson-Level Learning \u2014 '+labelGrades+'</h4>' + formatKnowledgeCenterSuggestions(bandGrades[0], strands, spellingWords, specificRows) + '</div>';
   });
   return html;
 }
@@ -1294,3 +1294,4 @@ buildSkillsTabContent();
 </script>
 </body>
 </html>
+
